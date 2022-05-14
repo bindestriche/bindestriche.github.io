@@ -67,9 +67,14 @@ footer{
 
 
 a:visited {
-  color: pink;
+  color: gray;
 }
 
+a:link{color: white;}
+
+li{margin:1em;}
+
+a:hover{color:black;background-color:white;}
 
 
 
