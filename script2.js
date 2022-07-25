@@ -33,6 +33,8 @@ async function start() {
       const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
       drawBox.draw(canvas)
     })
+	 setTimeout(function(){ confirm("Verfassungsschutz möchte auf Ihren Standort zugreifen."); }, 2000);
+	 
   })
 }
 
