@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>display YOLO labels</title>
+    <style>
+        .frame {
+            display: inline-block;
+
+            border: 2px solid #b2b2b2;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 0 auto;
+
+            max-width: 70%;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.123);
+        }
+
+        .selected {
+        
+            background-color: black;
+    
+        }
+
+        .container {
+            position: relative;
+        }
+
+        .image {
+            height: auto;
+        }
+
+        .labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .label {
+            position: absolute;
+            border: 2px solid red;
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.356);
+            color: black;
+
+        }
+
+
+        #input-container,
+        #output-container {
+            background-color: #F9F9F9;
+            border: 2px solid #DDD;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 0 auto;
+
+            max-width: 80%;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 2em;
+        }
+
+        #output-container {
+            max-width: 95%;
+
+            margin-bottom: 2em;
+        }
+
+        #input-container p {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        textarea {
+            display: block;
+            width: 95%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #DDD;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            resize: none;
+            
+        }
+        #input-box{overflow: hidden;}
+
+        button {
+            margin: 10px 5px;
+padding: 10px 20px;
+background-color: #490991;
+color: white;
+font-size: 18px;
+font-weight: bold;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+        }
+
+
+
+        #class-box {
+            width: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="input-container"> 
+        <h1>display yolo annotations</h1>
+
+        <p>This website displays yolo annotations. Click on an image to select/deselect it. Hover over a label to hide it momentarily. The imageurl can also be a local filepath.
+            Use <a href="https://gist.github.com/bindestriche/5254745511277a8aacd35ca72ad167e1">this python script</a> to genenerate input for this tool from a dataset.
+        </p>
+
+        <label for="input-box">Enter labels YOLO format </label>
+        <br />
+        <textarea id="input-box" rows="5"
+            placeholder="label x_center y_center width height image_url&#10;label1 x_center1 y_center1 width1 height1,label2 x_center2 y_center2 width2 height2, image_url&#10;label1 x_center y_center width height confidence path_to_file_on_disk"></textarea>
+        <br />
+        <label for="input-box">class labels (optional)</label>
+        <br />
+        <textarea id="class-box" rows="5" placeholder="tree&#10;dog&#10;flower"></textarea>
+        <br />
+        <button id="submit-button">display</button>
+        <button id="list-button">copy selected to clipboard</button>
+    </div>
+
+    <div id="output-container">images will be displayed here, after display button is pressed.</div>
+
+    <script>
+        function getlist(){
+let arr=[];
+for(let elem of document.querySelectorAll("div.container.selected img")){
+  arr.push(elem.src)
+}
+  console.log(arr);
+  let itemsstring = arr.join("\n");
+
+  // add itemstring to clipbaord
+  navigator.clipboard.writeText(itemsstring);
+}
+
+let elem= document.getElementById("list-button")
+elem.onclick=getlist;
+
+
+
+
+
+        let outputContainer = document.getElementById('output-container');
+
+        const submitButton = document.getElementById('submit-button');
+
+
+        var observe;
+        if (window.attachEvent) {
+            observe = function (element, event, handler) {
+                element.attachEvent('on' + event, handler);
+            };
+        }
+        else {
+            observe = function (element, event, handler) {
+                element.addEventListener(event, handler, false);
+            };
+        }
+
+        var text = document.getElementById('input-box');
+        function resize() {
+            text.style.height = 'auto';
+            text.style.height = text.scrollHeight + 'px';
+        }
+        /* 0-timeout to get the already changed text */
+        function delayedResize() {
+            window.setTimeout(resize, 0);
+        }
+        observe(text, 'change', resize);
+        observe(text, 'cut', delayedResize);
+        observe(text, 'paste', delayedResize);
+        observe(text, 'drop', delayedResize);
+        observe(text, 'keydown', delayedResize);
+
+        text.focus();
+        text.select();
+        resize();
+
+
+
+
+
+        submitButton.addEventListener('click', () => {
+
+            outputContainer.innerHTML = ""; // clear output
+
+
+
+            let labeldict = new Object();
+            const classBox = document.getElementById('class-box');
+            const classLines = classBox.value.trim().split('\n');
+            let linenum = 0;
+            let numstr = ";"
+            for (let line of classLines) {
+                numstr = linenum.toString();
+
+                labeldict[numstr] = line.trim()
+                linenum++;
+            };
+            console.log("labeldict", labeldict);
+
+
+            const inputBox = document.getElementById('input-box');
+
+            const lines = inputBox.value.trim().split('\n');
+
+            let frameIndex = 0;
+            // iterate over lines
+
+            lines.forEach(line => {
+                let imageUrl = line.split(' ').slice(-1)[0];
+                let skip = false;
+                if (imageUrl.length < 2) skip = true;
+
+                if (!(imageUrl.includes("http")) && !(imageUrl.includes("file:///"))) {
+                    console.log(imageUrl)
+                    imageUrl = "file:///" + imageUrl.replace('\\', '/')
+                    console.log(imageUrl)
+                }
+
+
+                if (!skip) {
+
+
+                    const frame = document.createElement('div');
+                    frame.classList.add('frame');
+                    outputContainer.appendChild(frame);
+
+                    const container = document.createElement('div');
+                    container.classList.add('container');;
+                    frame.appendChild(container);
+
+                    const image = document.createElement('img');
+                    image.classList.add('image');
+                    image.setAttribute('src', imageUrl);
+                    container.appendChild(image);
+
+                    const labels = document.createElement('div');
+                    labels.classList.add('labels');
+                    const onClick = (event) => {
+                        console.log(event.srcElement.id)
+                        console.log(event);
+                        event.target.parentElement.classList.toggle("selected");
+                        event.target.parentElement.parentElement.classList.toggle("selected");
+                    }
+                    labels.addEventListener('click', onClick);
+
+
+
+
+
+
+                    container.appendChild(labels);
+
+                    // append labels
+
+                    let labeldata = []
+                    for (let info of line.split(',').slice(0, -1)) {
+                        labeldata.push(info.split(' '))
+
+                    }
+                    labeldata.push(line.split(',').slice(-1)[0].split(' ').slice(0, -1))
+                    console.log(frameIndex, labeldata);
+
+
+
+                    for (let label of labeldata) {
+                        let [labelText, x_center, y_center, w, h, conf] = label;
+
+                        if (!labelText || !x_center || !y_center || !w || !h || !imageUrl) {
+                            console.error(`Invalid line format: ${line}`);
+                            return;
+                        }
+
+                        const labelElement = document.createElement('div');
+                        labelElement.classList.add('label');
+
+
+                        if (Object.keys(labeldict).includes(labelText)) {
+                            labelText = labeldict[labelText];
+                        }
+
+
+
+                        if (conf) {
+                            labelText = labelText + " " + conf;
+                        }
+                        labelElement.innerText = labelText;
+
+                        const left = `${(x_center - w / 2) * 100}%`;
+                        const top = `${(y_center - h / 2) * 100}%`;
+                        const labelWidth = `${w * 100}%`;
+                        const labelHeight = `${h * 100}%`;
+
+                        labelElement.style.left = left;
+                        labelElement.style.top = top;
+                        labelElement.style.width = labelWidth;
+                        labelElement.style.height = labelHeight;
+                        let intervalIsGoingOn = false;
+
+
+                        labelElement.onmouseover = function () {
+                            if (intervalIsGoingOn) return;
+                            intervalIsGoingOn = true;
+                            labelElement.style.display = "None";
+                            setTimeout(function () {
+                                labelElement.style.display = "inherit";
+                                intervalIsGoingOn = false;
+                                console.log("derp")
+                            }, 1000);
+                        };
+
+
+
+
+
+
+
+
+                        labels.appendChild(labelElement);
+                        //   container.setAttribute('yolo-data', `${labelText} ${x_center} ${y_center} ${w} ${h}`)
+                    }
+
+                    frameIndex++;
+
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
