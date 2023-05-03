@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dynamic Audio Loading Example</title>
+	<style>
+		audio {
+			width: 100%;
+			margin: 10px 0;
+			background-color: #f5f5f5;
+			padding: 10px;
+			border-radius: 5px;
+		}
+	</style>
+</head>
+<body>
+	<label for="quality-select">Select Quality:</label>
+	<select id="quality-select">
+		<option value="">Select Quality</option>
+		<option value="low.mp3">Low Quality</option>
+		<option value="medium.mp3">Medium Quality</option>
+		<option value="high.mp3">High Quality</option>
+	</select>
+	<audio id="myAudio" controls style="display: none;">
+		<source src="audio_default.mp3" type="audio/mpeg">
+		Your browser does not support the audio element.
+	</audio>
+
+	<script>
+		// Get the audio element and the quality select dropdown
+		var audioElement = document.getElementById('myAudio');
+		var qualitySelect = document.getElementById('quality-select');
+
+		// Show the audio element and update it when the user selects a quality
+		qualitySelect.addEventListener('change', function() {
+			var selectedQuality = qualitySelect.value;
+			if (selectedQuality) {
+				audioElement.style.display = 'block';
+				audioElement.src = selectedQuality;
+				audioElement.load();
+				audioElement.play();
+			} else {
+				audioElement.style.display = 'none';
+			}
+		});
+	</script>
+</body>
+</html>
