@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-lt-installed="true"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>Image and Annotation Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 40px 0;
+            text-align: center;
+        }
+        #dropZone {
+            border: 2px dashed #007bff; /* Blue border */
+            background-color: #e9ecef; /* Light grey background */
+            color: #495057; /* Dark grey text */
+            padding: 20px;
+            width: 800px;
+            height: 600px;
+            position: relative;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 8px; /* Rounded corners */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow */
+            transition: transform 0.2s ease-in-out; /* Smooth scaling on hover */
+        }
+        #dropZone:hover {
+            transform: scale(1.02); /* Slightly scale up the drop zone on hover */
+            border-color: #0056b3; /* Darker blue border on hover */
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Shadow for canvas */
+        }
+    </style>
+</head>
+<body>
+
+
+
+<div id="dropZone">Drag and drop an image or annotation file here</div>
+<script>document.addEventListener("DOMContentLoaded", function() {
+    const dropZone = document.getElementById('dropZone');
+    let canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    let img = new Image();
+    let scaleFactor = 1; // Scale factor for resizing image
+
+    dropZone.addEventListener('dragover', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer.files);
+        const imageFile = files.find(file => file.type.match('image.*'));
+        const annotationFile = files.find(file => file.name.endsWith('.xml') || file.name.endsWith('.txt'));
+
+        if (imageFile) {
+            displayImage(imageFile).then(() => {
+                if (annotationFile) {
+                    parseAndDrawAnnotations(annotationFile);
+                }
+            });
+        } else if (annotationFile) {
+            // Assumes image is already loaded
+            parseAndDrawAnnotations(annotationFile);
+        }
+    });
+
+    function displayImage(file) {
+        return new Promise((resolve, reject) => {
+            img.onload = function() {
+                const hRatio = dropZone.clientWidth / img.width;
+                const vRatio = dropZone.clientHeight / img.height;
+                scaleFactor = Math.min(hRatio, vRatio);
+                canvas.width = img.width * scaleFactor;
+                canvas.height = img.height * scaleFactor;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                if (!canvas.parentNode) {
+                    dropZone.innerHTML = '';
+                    dropZone.appendChild(canvas);
+                }
+                resolve();
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+   // Extend the 'parseAndDrawAnnotations' function with parsing logic
+
+function parseAndDrawAnnotations(file) {
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+        const content = event.target.result;
+        if (file.name.endsWith('.xml')) {
+            parseXML(content);
+        } else if (file.name.endsWith('.txt')) {
+            parseYOLO(content);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function parseXML(xmlString) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+    const objects = xmlDoc.getElementsByTagName("object");
+    for (let i = 0; i < objects.length; i++) {
+        const name = objects[i].getElementsByTagName("name")[0].childNodes[0].nodeValue;
+        const bndbox = objects[i].getElementsByTagName("bndbox")[0];
+        const xmin = parseInt(bndbox.getElementsByTagName("xmin")[0].childNodes[0].nodeValue);
+        const ymin = parseInt(bndbox.getElementsByTagName("ymin")[0].childNodes[0].nodeValue);
+        const xmax = parseInt(bndbox.getElementsByTagName("xmax")[0].childNodes[0].nodeValue);
+        const ymax = parseInt(bndbox.getElementsByTagName("ymax")[0].childNodes[0].nodeValue);
+        drawAnnotation(xmin, ymin, xmax, ymax, name);
+    }
+}
+
+function parseYOLO(content) {
+    const lines = content.split('\n');
+    for (let line of lines) {
+        const parts = line.split(' ');
+        if (parts.length === 5) {
+            const [classId, x, y, width, height] = parts.map(Number);
+            // Convert YOLO format to bounding box coordinates
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            const xmin = Math.max(0, (x - width / 2) * imgWidth);
+            const xmax = Math.min(imgWidth, (x + width / 2) * imgWidth);
+            const ymin = Math.max(0, (y - height / 2) * imgHeight);
+            const ymax = Math.min(imgHeight, (y + height / 2) * imgHeight);
+            drawAnnotation(xmin, ymin, xmax, ymax, `Class ${classId}`);
+        }
+    }
+}
+
+function drawAnnotation(xmin, ymin, xmax, ymax, label) {
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(xmin * scaleFactor, ymin * scaleFactor, (xmax - xmin) * scaleFactor, (ymax - ymin) * scaleFactor);
+    ctx.font = '18px Arial';
+    ctx.fillStyle = 'red';
+    ctx.fillText(label, xmin * scaleFactor, (ymin * scaleFactor) - 5);
+}
+
+
+
+
+
+});
+</script>
+
+
+
+</body></html>

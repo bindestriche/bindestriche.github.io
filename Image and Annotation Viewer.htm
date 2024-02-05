@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-lt-installed="true"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>Image and Annotation Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #dropZone {
+            border: 2px dashed #007bff;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            height: 400px;
+            position: relative;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-color: #fff;
+            border-radius: 5px;
+            color: #333;
+        }
+        #gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 1520px;
+            border: 2px solid #28a745;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        canvas {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+        canvas:hover {
+            transform: scale(1.05);
+        }
+        .info {
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: center;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #17a2b8;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="info">
+    <h2>How It Works</h2>
+    <p>Drag and drop an image file or an annotation file (.xml for 
+Pascal VOC or .txt for YOLO format) into the area below. If you drop an 
+image and its corresponding annotation file together, the application 
+will display the image with annotations overlaid. Images will be shown 
+in a gallery below.</p>
+</div>
+
+<div id="dropZone">Drag and drop an image with annotation file here</div>
+
+<div id="gallery"></div>
+
+<script>document.addEventListener("DOMContentLoaded", function() {
+    const dropZone = document.getElementById('dropZone');
+    const gallery = document.getElementById('gallery');
+
+    dropZone.addEventListener('dragover', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer.files);
+        processFiles(files);
+    });
+
+    function processFiles(files) {
+        const groupedFiles = groupFilesByBaseName(files);
+        for (const [baseName, fileGroup] of Object.entries(groupedFiles)) {
+            const imageFile = fileGroup.find(file => file.type.match('image.*'));
+            const annotationFile = fileGroup.find(file => file.name.endsWith('.xml') || file.name.endsWith('.txt'));
+            if (imageFile) {
+                displayImageInGallery(imageFile, annotationFile, baseName);
+            }
+        }
+    }
+
+    function groupFilesByBaseName(files) {
+        const groups = {};
+        files.forEach(file => {
+            const baseName = file.name.replace(/\..+$/, ''); // Remove the extension
+            if (!groups[baseName]) {
+                groups[baseName] = [];
+            }
+            groups[baseName].push(file);
+        });
+        return groups;
+    }
+
+    async function displayImageInGallery(imageFile, annotationFile, baseName) {
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        img.onload = function() {
+            const scaleFactor = Math.min(350 / img.width, 350 / img.height);
+            canvas.width = img.width * scaleFactor;
+            canvas.height = img.height * scaleFactor;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            if (annotationFile) {
+                parseAndDrawAnnotations(annotationFile, ctx, img, canvas, scaleFactor);
+            }
+            gallery.appendChild(canvas);
+        };
+        img.src = URL.createObjectURL(imageFile);
+    }
+
+    function parseAndDrawAnnotations(file, ctx, img, canvas, scaleFactor) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const content = event.target.result;
+            if (file.name.endsWith('.xml')) {
+                parseXML(content, ctx, canvas, scaleFactor);
+            } else if (file.name.endsWith('.txt')) {
+                parseYOLO(content, ctx, img, canvas, scaleFactor);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function parseXML(xmlString, ctx, canvas, scaleFactor) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+        const objects = xmlDoc.getElementsByTagName("object");
+        for (let i = 0; i < objects.length; i++) {
+            const name = objects[i].getElementsByTagName("name")[0].childNodes[0].nodeValue;
+            const bndbox = objects[i].getElementsByTagName("bndbox")[0];
+            const xmin = parseInt(bndbox.getElementsByTagName("xmin")[0].childNodes[0].nodeValue);
+            const ymin = parseInt(bndbox.getElementsByTagName("ymin")[0].childNodes[0].nodeValue);
+            const xmax = parseInt(bndbox.getElementsByTagName("xmax")[0].childNodes[0].nodeValue);
+            const ymax = parseInt(bndbox.getElementsByTagName("ymax")[0].childNodes[0].nodeValue);
+            drawAnnotation(ctx, xmin, ymin, xmax, ymax, name, scaleFactor);
+        }
+    }
+
+    function parseYOLO(content, ctx, img, canvas, scaleFactor) {
+        const lines = content.split('\n');
+        lines.forEach(line => {
+            const parts = line.split(' ');
+            if (parts.length === 5) {
+                const [classId, x, y, width, height] = parts.map(Number);
+                const imgWidth = img.width;
+                const imgHeight = img.height;
+                const xmin = (x - width / 2) * imgWidth;
+                const xmax = (x + width / 2) * imgWidth;
+                const ymin = (y - height / 2) * imgHeight;
+                const ymax = (y + height / 2) * imgHeight;
+                drawAnnotation(ctx, xmin, ymin, xmax, ymax, `Class ${classId}`, scaleFactor);
+            }
+        });
+    }
+
+    function drawAnnotation(ctx, xmin, ymin, xmax, ymax, label, scaleFactor) {
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(xmin * scaleFactor, ymin * scaleFactor, (xmax - xmin) * scaleFactor, (ymax - ymin) * scaleFactor);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = 'red';
+        ctx.fillText(label, xmin * scaleFactor, (ymin * scaleFactor) - 5);
+    }
+});
+</script>
+
+
+
+</body></html>
