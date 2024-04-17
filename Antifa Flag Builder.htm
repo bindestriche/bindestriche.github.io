@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html data-lt-installed="true"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Antifa Flag Builder</title>
+    <style>
+        .flex-container {
+            display: flex;
+        }
+
+        .container {
+            flex: 0 0 40%;
+            padding: 10px;
+            box-sizing: border-box;
+			margin: 5px;
+        }
+
+        .container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+		
+		
+        .color-picker-container {
+            margin: 10px 0;
+        }
+
+        .color-button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .color-button.black { background-color: black; color: white; }
+        .color-button.red { background-color: red; color: white; }
+    </style>
+</head>
+<body>
+ <div class="flex-container">
+    <div class="container">
+        <div class="control-group">
+            <label for="inputANTIFASCHISTISCHE">Text for ANTIFASCHISTISCHE</label>
+            <input type="text" id="inputANTIFASCHISTISCHE" class="input-field" placeholder="Change ANTIFASCHISTISCHE text" oninput="updateText('textPath3', this.value)">
+        </div>
+        <div class="control-group">
+            <label for="fontSizeANTIFASCHISTISCHE">Font Size for ANTIFASCHISTISCHE</label>
+            <input type="number" id="fontSizeANTIFASCHISTISCHE" class="input-field" placeholder="Font size for ANTIFASCHISTISCHE" onchange="updateStyle('textPath3', 'fontSize', this.value)" value="66">
+        </div>
+        <div class="control-group">
+            <label for="letterSpacingANTIFASCHISTISCHE">Letter Spacing for ANTIFASCHISTISCHE</label>
+            <input type="number" id="letterSpacingANTIFASCHISTISCHE" class="input-field" placeholder="Letter spacing for ANTIFASCHISTISCHE" onchange="updateStyle('textPath3', 'letterSpacing', this.value)" value="3">
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="control-group">
+            <label for="inputAktion">Text for AKTION</label>
+            <input type="text" id="inputAktion" class="input-field" placeholder="Change AKTION text" oninput="updateText('textPath1', this.value)">
+        </div>
+        <div class="control-group">
+            <label for="fontSizeAktion">Font Size for AKTION</label>
+            <input type="number" id="fontSizeAktion" class="input-field" placeholder="Font size for AKTION" onchange="updateStyle('textPath1', 'fontSize', this.value)" value="66">
+        </div>
+        <div class="control-group">
+            <label for="letterSpacingAktion">Letter Spacing for AKTION</label>
+            <input type="number" id="letterSpacingAktion" class="input-field" placeholder="Letter spacing for AKTION" onchange="updateStyle('textPath1', 'letterSpacing', this.value)" value="3">
+        </div>
+    </div>
+	</div>
+	
+	  <div class="color-picker-container">
+        <label>Change Color of top flag</label>
+        <input type="color" onchange="changeFillColor('path2229', this.value)" value="#000000">
+        <button class="color-button black" onclick="changeFillColor('path2229', 'black')">Black</button>
+        <button class="color-button red" onclick="changeFillColor('path2229', 'red')">Red</button>
+    </div>
+	
+	 <div class="color-picker-container">
+        <label>Change Color of bottom flag</label>
+        <input type="color" onchange="changeFillColor('path2231', this.value)" value="#000000">
+        <button class="color-button black" onclick="changeFillColor('path2231', 'black')">Black</button>
+        <button class="color-button red" onclick="changeFillColor('path2231', 'red')">Red</button>
+    </div>
+
+  
+
+    <button class="button" onclick="downloadSVG()">Download as SVG</button>
+    <button class="button" onclick="downloadPNG()">Download as PNG</button>
+
+    
+
+
+    <!-- Your SVG goes here -->
+    <svg width="692.93158" height="692.93158" id="svg2" version="1.0" sodipodi:docname="161_3.svg" inkscape:version="1.3 (0e150ed6c4, 2023-07-21)" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview id="namedview1" pagecolor="#ffffff" bordercolor="#000000" borderopacity="0.25" inkscape:showpageshadow="2" inkscape:pageopacity="0.0" inkscape:pagecheckerboard="0" inkscape:deskcolor="#d1d1d1" inkscape:zoom="0.58663801" inkscape:cx="305.12854" inkscape:cy="517.35482" inkscape:window-width="1920" inkscape:window-height="1009" inkscape:window-x="-8" inkscape:window-y="-8" inkscape:window-maximized="1" inkscape:current-layer="svg2"></sodipodi:namedview>
+  <defs id="defs4"></defs>
+  <metadata id="metadata7">
+    <rdf:rdf>
+      <cc:work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"></dc:type>
+      </cc:work>
+    </rdf:rdf>
+  </metadata>
+  <circle id="path2227-7" style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.95788" cx="344.33685" cy="-344.78403" r="271.9418" transform="rotate(90)"></circle>
+  <path style="fill:none;fill-opacity:1;stroke:#808000;stroke-width:2.54779;stroke-linejoin:round;paint-order:stroke fill markers" id="path3-5" sodipodi:type="arc" sodipodi:cx="-344.75375" sodipodi:cy="343.05435" sodipodi:rx="322.95047" sodipodi:ry="325.0217" sodipodi:start="4.7800941" sodipodi:end="4.6450429" sodipodi:arc-type="arc" d="M -322.90505,18.777316 A 322.95047,325.0217 0 0 1 -21.989298,354.08422 322.95047,325.0217 0 0 1 -344.81173,668.07604 322.95047,325.0217 0 0 1 -667.52212,353.96759 322.95047,325.0217 0 0 1 -366.48676,18.769442" sodipodi:open="true" transform="scale(-1,1)"></path>
+  <path style="fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path2225" d="m 687.93528,346.44802 c 0,188.59695 -152.88805,341.485 -341.485,341.485 -188.59696,0 -341.4850083,-152.88805 -341.4850083,-341.485 0,-188.59696 152.8880483,-341.4850048 341.4850083,-341.4850048 188.59695,0 341.485,152.8880448 341.485,341.4850048 z"></path>
+  <path d="m 609.64727,346.44801 c 0,145.35969 -117.83731,263.197 -263.19699,263.197 -145.35969,0 -263.196996,-117.83731 -263.196996,-263.197 0,-145.35968 117.837306,-263.19699 263.196996,-263.19699 145.35968,0 263.19699,117.83731 263.19699,263.19699 z" id="path2227" style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.89492"></path>
+  <path style="fill: red; fill-opacity: 1; fill-rule: evenodd; stroke: none;" d="m 166.56424,164.11785 c -44.60142,43.92372 -71.07653,100.26054 -75.4375,164.50001 64.83242,57.71838 134.81679,78.34704 217.21875,61.1875 70.08105,-22.84033 81.94292,-24.11037 168.21875,31.09375 l -55.4375,169.46874 c 10.46154,-3.22667 20.65842,-7.10657 30.5,-11.59375 l 123.875,-345.03125 c -3.98915,-2.12755 -7.90882,-4.28299 -11.4375,-7.15625 -73.56502,-75.30691 -105.85283,-72.94185 -187.125,-32.125 -75.61008,27.81826 -170.42355,17.84647 -210.375,-30.34375 z" id="path2229"></path>
+  <path style="fill: black; fill-opacity: 1; fill-rule: evenodd; stroke: none;" d="m 91.72049,339.89911 c 7.03287,85.35262 85.08226,131.75407 157.25,133.90625 33.80427,1.00639 55.08332,-15.2396 98.4375,12.34375 0,0 -37.40625,111.46874 -37.40625,111.46874 -1.16071,3.63366 22.48715,3.66489 26.3125,3.84375 27.61911,-77.2871 73.59375,-205.87499 73.59375,-205.87499 -37.62688,-20.54972 -67.19912,-6.98107 -102.125,4.65625 -86.61434,18.61102 -151.58389,-6.07995 -216.0625,-60.34375 z" id="path2231"></path>
+  <ellipse style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.31153;stroke-linejoin:round;paint-order:stroke fill markers" id="path3" cx="344.78403" cy="344.33685" rx="293.00247" ry="294.88162"></ellipse>
+  <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:Bold;font-stretch:normal;font-size:66.6667px;line-height:64.9604px;font-family:Arial;letter-spacing:6px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.57984;stroke-linejoin:round;paint-order:stroke fill markers" id="text1"><textPath xlink:href="#path2227-7" startOffset="50%" id="textPath3" style="font-style: normal; font-variant: normal; font-weight: bold; font-stretch: normal; font-size: 66px; font-family: Arial; text-align: center; letter-spacing: 3px; text-anchor: middle;">ANTIFASCHISTISCHE</textPath></text>
+  <text xml:space="preserve" style="font-style:normal;font-variant:normal;font-weight:Bold;font-stretch:normal;font-size:66.6667px;line-height:64.9604px;font-family:Arial;letter-spacing:6px;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.57984;stroke-linejoin:round;paint-order:stroke fill markers" id="text2" transform="translate(3.0837828e-5)"><textPath xlink:href="#path3-5" startOffset="50%" id="textPath1" style="font-style: normal; font-variant: normal; font-weight: bold; font-stretch: normal; font-size: 66px; font-family: Arial; text-align: center; letter-spacing: 3px; text-anchor: middle;">AKTION</textPath></text>
+</svg>
+
+    <script>
+        function updateText(textPathId, newText) {
+            document.getElementById(textPathId).textContent = newText;
+        }
+		
+		  function updateStyle(textPathId, style, value) {
+            const textPath = document.getElementById(textPathId);
+            if (style === 'fontSize') {
+                textPath.style.fontSize = value + 'px';
+            } else if (style === 'letterSpacing') {
+                textPath.style.letterSpacing = value + 'px';
+            }
+        }
+		
+		 function downloadSVG() {
+            const svgElement = document.getElementById('svg2');
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const svgUrl = URL.createObjectURL(svgBlob);
+            const downloadLink = document.createElement("a");
+            downloadLink.href = svgUrl;
+            downloadLink.download = "image.svg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        function downloadPNG() {
+            const svgElement = document.getElementById('svg2');
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const canvas = document.createElement("canvas");
+            canvas.width = svgElement.clientWidth;
+            canvas.height = svgElement.clientHeight;
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+                const pngUrl = canvas.toDataURL("image/png");
+                const downloadLink = document.createElement("a");
+                downloadLink.href = pngUrl;
+                downloadLink.download = "image.png";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            };
+            img.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(svgData);
+        }
+		
+		  function changeFillColor(pathId, color) {
+            document.getElementById(pathId).style.fill = color;
+        }
+    </script>
+
+
+</body></html>
