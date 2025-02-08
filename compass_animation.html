@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Politischer Kompass Animation</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+  <style>
+    /* Globale Styles */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+    h2 {
+      margin-top: 20px;
+      color: #007bff;
+      text-align: center;
+    }
+
+    /* SVG Styling */
+    #compass {
+      max-width: 90vw;
+      max-height: 80vw;
+      height: auto;
+      border: 2px solid #007bff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin: 20px auto;
+      background: white;
+    }
+
+    /* Steuerungselemente */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .controls label {
+      font-size: 1.1rem;
+      margin-right: 5px;
+    }
+    .controls input[type="range"] {
+      width: 200px;
+    }
+    .controls button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Beschreibung */
+    #description {
+      max-width: 600px;
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 20px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    /* Footer */
+    #footer {
+      font-size: 0.8rem;
+      color: #666;
+      text-align: center;
+      margin-top: 20px;
+    }
+    #footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    #footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 600px) {
+      .controls input[type="range"] {
+        width: 150px;
+      }
+      .controls button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* SVG Animationstransitionen */
+    .party {
+      transition: transform 1s ease-in-out, opacity 0.5s ease-in-out;
+    }
+    #tracks {
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0; /* standardmäßig versteckt */
+    }
+  </style>
+</head>
+<body>
+  <h2>Politischer Kompass Animation</h2>
+  <svg id="compass" viewBox="0 0 500 500">
+    <!-- Hintergrund: Quadranten -->
+    <rect x="0" y="0" width="250" height="250" fill="#ff7575"></rect>
+    <rect x="250" y="0" width="250" height="250" fill="#42aaff"></rect>
+    <rect x="0" y="250" width="250" height="250" fill="#9aed97"></rect>
+    <rect x="250" y="250" width="250" height="250" fill="#c09aec"></rect>
+    <!-- Zentrale Kreuzlinien -->
+    <line x1="250" y1="0" x2="250" y2="500" stroke="black" stroke-width="2"></line>
+    <line x1="0" y1="250" x2="500" y2="250" stroke="black" stroke-width="2"></line>
+    <!-- Gruppe für Parteispuren -->
+    <g id="tracks"></g>
+    <!-- Parteigruppen -->
+    <g class="party" id="SPD" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="red" stroke="black"></circle>
+      <text>SPD</text>
+    </g>
+    <g class="party" id="AfD" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="brown" stroke="black"></circle>
+      <text>AfD</text>
+    </g>
+    <g class="party" id="CDU" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="black" stroke="white"></circle>
+      <text>CDU</text>
+    </g>
+    <g class="party" id="CSU" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="gray" stroke="black"></circle>
+      <text>CSU</text>
+    </g>
+    <g class="party" id="FDP" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="yellow" stroke="black"></circle>
+      <text>FDP</text>
+    </g>
+    <g class="party" id="DieGruenen" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="green" stroke="black"></circle>
+      <text>Die Grünen</text>
+    </g>
+    <g class="party" id="DieLinke" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="purple" stroke="black"></circle>
+      <text>Die Linke</text>
+    </g>
+    <g class="party" id="BSW" transform="translate(0,0)">
+      <circle cx="0" cy="0" r="10" fill="darkred" stroke="black"></circle>
+      <text>BSW</text>
+    </g>
+  </svg>
+
+  <div class="controls">
+    <label for="yearSlider">Jahr: <span id="yearLabel">2013</span></label>
+    <input type="range" id="yearSlider" value="0">
+    <!-- Kombinierter Toggle-Button für Animation -->
+    <button id="toggleAnimation">Animation starten</button>
+    <button id="toggleTracks">Spuren Ein/Aus</button>
+  </div>
+
+  <p id="description"></p>
+
+  <p id="footer"> Werte von Hand abgelesen und geschätzt.
+    Datenquelle: <a href="https://www.politicalcompass.org/germany2025" target="_blank">Political Compass Germany 2025 </a>
+  </p>
+
+  <script>
+    // Daten: Positionen der Parteien für verschiedene Jahre
+    const positionData = {
+      2013: { 
+        SPD:        { x: 1,   y: 2 },
+        AfD:        { x: 6,   y: 7 },
+        CDU:        { x: 7,   y: 6.5 },
+        DieLinke:   { x: -7,  y: -5.5 },
+        DieGruenen: { x: -3.5,y: -4 },
+        FDP:        { x: 8,   y: -1.5 }
+      },
+      2017: { 
+        DieLinke:   { x: -2.5, y: -1.5 },
+        SPD:        { x: 3,    y: 2.5 },
+        FDP:        { x: 7,    y: 4 },
+        DieGruenen: { x: 2,    y: 4.5 },
+        CDU:        { x: 8,    y: 5.5 },
+        CSU:        { x: 4,    y: 7 },
+        AfD:        { x: 5.5,  y: 8 }
+      },
+      2021: { 
+        DieLinke:   { x: -2.5, y: -1.75 },
+        FDP:        { x: 9,    y: 1 },
+        DieGruenen: { x: 3,    y: 4 },
+        CSU:        { x: 5.5,  y: 6.5 },
+        SPD:        { x: 4,    y: 2.5 },
+        AfD:        { x: 7,    y: 8 },
+        CDU:        { x: 7.5,  y: 6 }
+      },
+      2025: { 
+        DieLinke:   { x: -3,   y: -2 },
+        FDP:        { x: 9.5,  y: -5 },
+        DieGruenen: { x: 2.5,  y: 2.5 },
+        SPD:        { x: 3.5,  y: 2.25 },
+        BSW:        { x: -1,   y: 7 },
+        CSU:        { x: 6.5,  y: 7 },
+        CDU:        { x: 6.75, y: 6.5 },
+        AfD:        { x: 7.5,  y: 8.5 }
+      }
+    };
+
+    // Array der Jahreszahlen (sortiert)
+    const years = Object.keys(positionData).sort();
+    const slider = document.getElementById("yearSlider");
+    slider.min = 0;
+    slider.max = years.length - 1;
+    slider.step = 1;
+    slider.value = 0;
+    
+    let currentYearIndex = 0;
+    let animationInterval = null;
+
+    // Funktion, um politische Koordinaten in SVG-Koordinaten umzuwandeln
+    function translateCoords(x, y) {
+      // Mittelpunkt (250, 250) mit 25 Pixel pro Einheit.
+      return { cx: 250 + x * 25, cy: 250 - y * 25 };
+    }
+
+    // Dynamische Berechnung des Textabstands, um die Labels im sichtbaren Bereich zu halten.
+    function getTextOffset(cx, cy) {
+      let dx = 15;
+      let dy = -15;
+      if (cx > 470) {
+        dx = -40;
+      } else if (cx > 450) {
+        dx = -15;
+      } else if (cx < 50) {
+        dx = 15;
+      }
+      if (cy < 50) {
+        dy = 15;
+      } else if (cy > 450) {
+        dy = -15;
+      }
+      return { dx, dy };
+    }
+
+    // Aktualisiert die Positionen der Parteien und die Beschreibung.
+    function updatePositions(index) {
+      currentYearIndex = parseInt(index, 10);
+      const year = years[currentYearIndex];
+      document.getElementById("yearLabel").textContent = year;
+      let description = `Positionen der Parteien im Jahr ${year}:<br>`;
+      document.querySelectorAll(".party").forEach(group => {
+        const party = group.id;
+        const textElement = group.querySelector("text");
+        if (positionData[year][party]) {
+          const pos = positionData[year][party];
+          const { cx, cy } = translateCoords(pos.x, pos.y);
+          group.setAttribute("transform", `translate(${cx}, ${cy})`);
+          const offset = getTextOffset(cx, cy);
+          textElement.setAttribute("x", offset.dx);
+          textElement.setAttribute("y", offset.dy);
+          group.style.opacity = "1";
+          description += `${party} liegt auf der Links-/Rechts-Skala bei ${pos.x} und auf der Liberal/Autoritär-Skala bei ${pos.y}.<br>`;
+        } else {
+          group.style.opacity = "0";
+        }
+      });
+      document.getElementById("description").innerHTML = description;
+    }
+
+    // Aktualisierung beim Bewegen des Schiebereglers.
+    slider.addEventListener("input", () => {
+      updatePositions(slider.value);
+    });
+    updatePositions(0);
+
+    // Erzeugt die Spuren (Polylinien) für jede Partei.
+    function initTracks() {
+      const tracksGroup = document.getElementById("tracks");
+      tracksGroup.innerHTML = "";
+      document.querySelectorAll(".party").forEach(group => {
+        const party = group.id;
+        let points = [];
+        years.forEach(year => {
+          if (positionData[year][party]) {
+            const pos = positionData[year][party];
+            const { cx, cy } = translateCoords(pos.x, pos.y);
+            points.push(`${cx},${cy}`);
+          }
+        });
+        if (points.length > 0) {
+          const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          polyline.setAttribute("points", points.join(" "));
+          const circle = group.querySelector("circle");
+          let fillColor = circle ? circle.getAttribute("fill") : "black";
+          polyline.setAttribute("stroke", fillColor);
+          polyline.setAttribute("stroke-width", "2");
+          polyline.setAttribute("fill", "none");
+          polyline.classList.add("party-track");
+          tracksGroup.appendChild(polyline);
+        }
+      });
+    }
+    initTracks();
+
+    // Kombinierter Toggle-Button für Animation (starten/pausieren).
+    const toggleAnimationButton = document.getElementById("toggleAnimation");
+    toggleAnimationButton.addEventListener("click", () => {
+      if (animationInterval) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+        toggleAnimationButton.textContent = "Animation starten";
+      } else {
+        animationInterval = setInterval(() => {
+          currentYearIndex = (currentYearIndex < years.length - 1) ? currentYearIndex + 1 : 0;
+          slider.value = currentYearIndex;
+          updatePositions(currentYearIndex);
+        }, 1500);
+        toggleAnimationButton.textContent = "Pause";
+      }
+    });
+
+    // Umschalten der Sichtbarkeit der Parteispuren.
+    document.getElementById("toggleTracks").addEventListener("click", () => {
+      const tracksGroup = document.getElementById("tracks");
+      tracksGroup.style.opacity = (tracksGroup.style.opacity === "1") ? "0" : "1";
+    });
+  </script>
+</body>
+</html>
