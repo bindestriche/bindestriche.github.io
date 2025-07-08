@@ -15,7 +15,11 @@ const holes = [
   {x: 400, y: 400, r: 15}
 ];
 const friction = 0.98;
-const sensitivity = 0.4;
+let sensitivity = 0.5;
+
+// Für Reset-Button: Offset für Neutralstellung
+let angleXOffset = 0;
+let angleYOffset = 0;
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
@@ -25,8 +29,9 @@ document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 if (window.DeviceMotionEvent) {
   window.addEventListener('devicemotion', e => {
     if (e.accelerationIncludingGravity) {
-      angleX = e.accelerationIncludingGravity.x*-0.01; // Scale down for sensitivity
-      angleY = e.accelerationIncludingGravity.y*-0.01; // Scale down for sensitivity
+      // Offset berücksichtigen
+      angleX = e.accelerationIncludingGravity.x * -0.1 - angleXOffset;
+      angleY = e.accelerationIncludingGravity.y * 0.1 - angleYOffset;
     }
   });
 }
@@ -36,6 +41,26 @@ function restartGame() {
   marble.y = startPoint.y;
   velocity = {x: 0, y: 0};
 }
+
+// --- NEU: Reset-Button und Sensitivitäts-Slider ---
+const resetBtn = document.getElementById("resetBtn");
+const sensitivitySlider = document.getElementById("sensitivitySlider");
+const sensitivityValue = document.getElementById("sensitivityValue");
+
+resetBtn.addEventListener("click", () => {
+  // Aktuelle Werte als Offset speichern
+  angleXOffset = angleX + angleXOffset;
+  angleYOffset = angleY + angleYOffset;
+});
+
+sensitivitySlider.addEventListener("input", () => {
+  sensitivity = Number(sensitivitySlider.value);
+  sensitivityValue.textContent = sensitivity.toFixed(2);
+});
+// Initialwert anzeigen
+sensitivityValue.textContent = sensitivitySlider.value;
+
+// ---------------------------------------------------
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -63,7 +88,7 @@ function draw() {
   // Debug
   ctx.fillStyle = "black";
   ctx.font = "14px sans-serif";
-  ctx.fillText(`angleX: ${angleX.toFixed(2)} angleY: ${angleY.toFixed(2)}`, 10, 20);
+  ctx.fillText(`angleX: ${(angleX + angleXOffset).toFixed(2)} angleY: ${(angleY + angleYOffset).toFixed(2)} sensitivity: ${sensitivity.toFixed(2)}`, 10, 40);
 }
 
 function update() {
@@ -77,8 +102,8 @@ function update() {
   if (keys['d']) keyboardAngleX += keyboard_sensitivity;
 
   // Kombiniere Tastatur und DeviceMotion
-  const totalAngleX = angleX + keyboardAngleX;
-  const totalAngleY = angleY + keyboardAngleY;
+  const totalAngleX = (angleX + angleXOffset) + keyboardAngleX;
+  const totalAngleY = (angleY + angleYOffset) + keyboardAngleY;
 
   velocity.x += totalAngleX * sensitivity;
   velocity.y += totalAngleY * sensitivity;
