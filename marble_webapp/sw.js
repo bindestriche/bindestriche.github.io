@@ -1,6 +1,6 @@
 
 // Add all your assets to this list
-const CACHE_NAME = 'marble-maze-v2';
+const CACHE_NAME = 'marble-maze-v3';
 // All paths are now relative to the sw.js location
 const URLS_TO_CACHE = [
   '.', // Caches the subfolder's root (e.g., /marble_webapp/)

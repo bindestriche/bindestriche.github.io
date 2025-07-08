@@ -1,3 +1,11 @@
+// A helper function to calculate distance (Perfect as you wrote it)
+function calculateDistance(point1, point2) {
+  const dx = point2.x - point1.x;
+  const dy = point2.y - point1.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+
 class Game {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
@@ -36,13 +44,18 @@ class Game {
     this.playAgainBtn = document.getElementById('play-again-btn');
   }
 
+
+
+
+
+
   async init() {
     await this.loadAssets();
     this.setupEventListeners();
     this.resize(); // Initial size calculation
     this.restart();
     this.gameState = 'playing';
-    this.gameLoop();
+    this.gameLoop();8
   }
 
   loadAssets() {
@@ -82,6 +95,7 @@ class Game {
         }
       });
     }
+
 
     // Window Resize/Orientation Change
     window.addEventListener('resize', () => this.resize());
