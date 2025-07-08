@@ -18,30 +18,34 @@
     <canvas id="gameCanvas"></canvas>
     <div id="ui-overlay">
         <div id="win-message" class="hidden">
-            <h2>You Won!</h2>
-            <button id="play-again-btn">Play Again</button>
+            <h2>Gewonnen</h2>
+            <button id="play-again-btn">Nochmal</button>
         </div>
     </div>
   </div>
 
   <div id="controls">
-    <button id="resetTiltBtn">Reset Tilt</button>
+    <button id="resetTiltBtn">zurücksetzen</button>
     <div class="slider-container">
-      <label for="sensitivitySlider">Sensitivity</label>
+      <label for="sensitivitySlider">Empfindlichkeit</label>
       <input type="range" id="sensitivitySlider" min="0.1" max="1.5" step="0.05" value="0.5">
     </div>
   </div>
 
-  <script>
+       
+<script>
     // Register Service Worker for offline functionality
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => console.log('ServiceWorker registration successful'))
+        // Corrected path: 'sw.js' is in the same directory as index.html
+        navigator.serviceWorker.register('sw.js') 
+          .then(registration => console.log('ServiceWorker registration successful. Scope: ', registration.scope))
           .catch(err => console.log('ServiceWorker registration failed: ', err));
       });
     }
   </script>
   <script src="app.js" type="module"></script>
+
+ 
 </body>
 </html>
