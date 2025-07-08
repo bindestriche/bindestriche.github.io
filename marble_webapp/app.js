@@ -15,7 +15,7 @@ const holes = [
   {x: 400, y: 400, r: 15}
 ];
 const friction = 0.98;
-const sensitivity = 0.5;
+const sensitivity = 0.4;
 
 const keys = {};
 document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
@@ -25,8 +25,8 @@ document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 if (window.DeviceMotionEvent) {
   window.addEventListener('devicemotion', e => {
     if (e.accelerationIncludingGravity) {
-      angleX = e.accelerationIncludingGravity.x*0.1; // Scale down for sensitivity
-      angleY = e.accelerationIncludingGravity.y*0.1; // Scale down for sensitivity
+      angleX = e.accelerationIncludingGravity.x*-0.01; // Scale down for sensitivity
+      angleY = e.accelerationIncludingGravity.y*-0.01; // Scale down for sensitivity
     }
   });
 }
@@ -70,10 +70,11 @@ function update() {
   // WASD simulation
   let keyboardAngleX = 0;
   let keyboardAngleY = 0;
-  if (keys['w']) keyboardAngleY -= 1;
-  if (keys['s']) keyboardAngleY += 1;
-  if (keys['a']) keyboardAngleX -= 1;
-  if (keys['d']) keyboardAngleX += 1;
+  let keyboard_sensitivity = 5;
+  if (keys['w']) keyboardAngleY -= keyboard_sensitivity;
+  if (keys['s']) keyboardAngleY += keyboard_sensitivity;
+  if (keys['a']) keyboardAngleX -= keyboard_sensitivity;
+  if (keys['d']) keyboardAngleX += keyboard_sensitivity;
 
   // Kombiniere Tastatur und DeviceMotion
   const totalAngleX = angleX + keyboardAngleX;
