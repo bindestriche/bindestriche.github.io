@@ -25,8 +25,8 @@ document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 if (window.DeviceMotionEvent) {
   window.addEventListener('devicemotion', e => {
     if (e.accelerationIncludingGravity) {
-      angleX = e.accelerationIncludingGravity.x;
-      angleY = -e.accelerationIncludingGravity.y;
+      angleX = e.accelerationIncludingGravity.x*0.1; // Scale down for sensitivity
+      angleY = e.accelerationIncludingGravity.y*0.1; // Scale down for sensitivity
     }
   });
 }
