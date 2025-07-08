@@ -77,7 +77,7 @@ class Game {
       window.addEventListener('devicemotion', e => {
         if (e.accelerationIncludingGravity) {
             // Adjust axis for intuitive control
-            this.tilt.x = e.accelerationIncludingGravity.x * 2;
+            this.tilt.x = e.accelerationIncludingGravity.x * -2;
             this.tilt.y = e.accelerationIncludingGravity.y * -2;
         }
       });
