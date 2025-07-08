@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#317EFB"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <title>Sensor WebApp</title>
+</head>
+<body>
+  <h1>Sensor Readings</h1>
+  <div class="sensor">
+    <h2>Accelerometer</h2>
+    <p>X: <span id="acc-x">0</span></p>
+    <p>Y: <span id="acc-y">0</span></p>
+    <p>Z: <span id="acc-z">0</span></p>
+  </div>
+  <div class="sensor">
+    <h2>Orientation</h2>
+    <p>Alpha: <span id="ori-alpha">0</span></p>
+    <p>Beta: <span id="ori-beta">0</span></p>
+    <p>Gamma: <span id="ori-gamma">0</span></p>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
