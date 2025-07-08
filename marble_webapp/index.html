@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marble Maze Game</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    /*make the canvas be centered on the page and have a bit of border*/
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    canvas {
+      width: 90vw;
+      height: 90vh;
+      max-width: 1000px;
+      max-height: 800px;
+      display: block;
+      background: #f0f0f0;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      box-sizing: border-box;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button onclick="restartGame()">Restart</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <script src="app.js">
+  
+  </script>
+</body>
+</html>
