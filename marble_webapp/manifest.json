@@ -1,15 +1,21 @@
 {
-  "name": "Marble WebApp",
-  "short_name": "Sensors",
-  "start_url": "./index.html",
+  "name": "Marble Maze",
+  "short_name": "MarbleMaze",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#317EFB",
+  "background_color": "#333333",
+  "theme_color": "#333333",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }

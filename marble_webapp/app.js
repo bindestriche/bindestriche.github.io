@@ -1,147 +1,228 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+class Game {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext("2d");
 
-let angleX = 0;
-let angleY = 0;
-let velocity = {x: 0, y: 0};
-let marble = {x: 50, y: 50, r: 10};
-const startPoint = {x: 50, y: 50};
-const goal = {x: canvas.width - 60, y: canvas.height - 60, r: 20};
-const holes = [
-  {x: 150, y: 150, r: 15},
-  {x: 300, y: 200, r: 15},
-  {x: 400, y: 400, r: 15}
-];
-const friction = 0.98;
-let sensitivity = 0.5;
+    // Game state
+    this.gameState = 'loading'; // 'loading', 'playing', 'won'
+    this.assets = {};
+    this.friction = 0.98;
+    this.sensitivity = 0.5;
 
-// Für Reset-Button: Offset für Neutralstellung
-let angleXOffset = 0;
-let angleYOffset = 0;
+    // Input state
+    this.keys = {};
+    this.tilt = { x: 0, y: 0 };
+    this.tiltOffset = { x: 0, y: 0 };
+    
+    // Game objects (will be defined in resize)
+    this.marble = {};
+    this.goal = {};
+    this.holes = [];
+    this.level = {
+        start: { x: 0.1, y: 0.1 },
+        goal: { x: 0.9, y: 0.9, r: 0.05 },
+        holes: [
+            { x: 0.3, y: 0.4, r: 0.04 },
+            { x: 0.6, y: 0.2, r: 0.04 },
+            { x: 0.7, y: 0.7, r: 0.04 },
+            { x: 0.2, y: 0.8, r: 0.04 },
+        ]
+    };
 
-const keys = {};
-document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    // UI Elements
+    this.resetTiltBtn = document.getElementById('resetTiltBtn');
+    this.sensitivitySlider = document.getElementById('sensitivitySlider');
+    this.winMessage = document.getElementById('win-message');
+    this.playAgainBtn = document.getElementById('play-again-btn');
+  }
 
-// Mobile tilt support
-if (window.DeviceMotionEvent) {
-  window.addEventListener('devicemotion', e => {
-    if (e.accelerationIncludingGravity) {
-      // Offset berücksichtigen
-      angleX = e.accelerationIncludingGravity.x * -0.1 - angleXOffset;
-      angleY = e.accelerationIncludingGravity.y * 0.1 - angleYOffset;
+  async init() {
+    await this.loadAssets();
+    this.setupEventListeners();
+    this.resize(); // Initial size calculation
+    this.restart();
+    this.gameState = 'playing';
+    this.gameLoop();
+  }
+
+  loadAssets() {
+    const assetPromises = [
+      this.loadImage('marble', 'assets/marble.png'),
+      this.loadImage('hole', 'assets/hole.png'),
+      this.loadImage('goal', 'assets/goal.png'),
+      this.loadImage('background', 'assets/background.jpg'),
+    ];
+    return Promise.all(assetPromises);
+  }
+
+  loadImage(key, src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        this.assets[key] = img;
+        resolve();
+      };
+      img.onerror = reject;
+    });
+  }
+
+  setupEventListeners() {
+    // Keyboard
+    document.addEventListener('keydown', e => this.keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
+
+    // Device Tilt
+    if (window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', e => {
+        if (e.accelerationIncludingGravity) {
+            // Adjust axis for intuitive control
+            this.tilt.x = e.accelerationIncludingGravity.x * 2;
+            this.tilt.y = e.accelerationIncludingGravity.y * -2;
+        }
+      });
     }
-  });
-}
 
-function restartGame() {
-  marble.x = startPoint.x;
-  marble.y = startPoint.y;
-  velocity = {x: 0, y: 0};
-}
-
-// --- NEU: Reset-Button und Sensitivitäts-Slider ---
-const resetBtn = document.getElementById("resetBtn");
-const sensitivitySlider = document.getElementById("sensitivitySlider");
-const sensitivityValue = document.getElementById("sensitivityValue");
-
-resetBtn.addEventListener("click", () => {
-  // Aktuelle Werte als Offset speichern
-  angleXOffset = angleX + angleXOffset;
-  angleYOffset = angleY + angleYOffset;
-});
-
-sensitivitySlider.addEventListener("input", () => {
-  sensitivity = Number(sensitivitySlider.value);
-  sensitivityValue.textContent = sensitivity.toFixed(2);
-});
-// Initialwert anzeigen
-sensitivityValue.textContent = sensitivitySlider.value;
-
-// ---------------------------------------------------
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Goal
-  ctx.fillStyle = "green";
-  ctx.beginPath();
-  ctx.arc(goal.x, goal.y, goal.r, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Holes
-  ctx.fillStyle = "black";
-  for (const hole of holes) {
-    ctx.beginPath();
-    ctx.arc(hole.x, hole.y, hole.r, 0, Math.PI * 2);
-    ctx.fill();
+    // Window Resize/Orientation Change
+    window.addEventListener('resize', () => this.resize());
+    
+    // UI Controls
+    this.resetTiltBtn.addEventListener('click', () => {
+        this.tiltOffset.x = this.tilt.x;
+        this.tiltOffset.y = this.tilt.y;
+    });
+    this.sensitivitySlider.addEventListener('input', e => this.sensitivity = Number(e.target.value));
+    this.playAgainBtn.addEventListener('click', () => this.restart());
+  }
+  
+  resize() {
+    const size = this.canvas.parentElement.getBoundingClientRect().width;
+    this.canvas.width = size;
+    this.canvas.height = size;
+    
+    // Recalculate all game object sizes and positions based on the new canvas size
+    const scale = (obj, relativePos) => {
+        obj.x = relativePos.x * size;
+        obj.y = relativePos.y * size;
+        obj.r = (relativePos.r || 0.025) * size; // Default marble radius
+    }
+    
+    scale(this.marble, this.level.start);
+    scale(this.goal, this.level.goal);
+    this.holes = this.level.holes.map(h => {
+        const hole = {};
+        scale(hole, h);
+        return hole;
+    });
+    
+    // Force a redraw
+    this.draw();
   }
 
-  // Marble
-  ctx.fillStyle = "blue";
-  ctx.beginPath();
-  ctx.arc(marble.x, marble.y, marble.r, 0, Math.PI * 2);
-  ctx.fill();
+  restart() {
+    const size = this.canvas.width;
+    this.marble.x = this.level.start.x * size;
+    this.marble.y = this.level.start.y * size;
+    this.marble.vx = 0;
+    this.marble.vy = 0;
+    
+    this.winMessage.classList.add('hidden');
+    this.gameState = 'playing';
+  }
 
-  // Debug
-  ctx.fillStyle = "black";
-  ctx.font = "14px sans-serif";
-  ctx.fillText(`angleX: ${(angleX + angleXOffset).toFixed(2)} angleY: ${(angleY + angleYOffset).toFixed(2)} sensitivity: ${sensitivity.toFixed(2)}`, 10, 40);
-}
+  update() {
+    if (this.gameState !== 'playing') return;
 
-function update() {
-  // WASD simulation
-  let keyboardAngleX = 0;
-  let keyboardAngleY = 0;
-  let keyboard_sensitivity = 5;
-  if (keys['w']) keyboardAngleY -= keyboard_sensitivity;
-  if (keys['s']) keyboardAngleY += keyboard_sensitivity;
-  if (keys['a']) keyboardAngleX -= keyboard_sensitivity;
-  if (keys['d']) keyboardAngleX += keyboard_sensitivity;
+    // 1. Calculate input force
+    let forceX = 0;
+    let forceY = 0;
 
-  // Kombiniere Tastatur und DeviceMotion
-  const totalAngleX = (angleX + angleXOffset) + keyboardAngleX;
-  const totalAngleY = (angleY + angleYOffset) + keyboardAngleY;
+    // Keyboard input (for desktop)
+    const keySensitivity = 5;
+    if (this.keys['w'] || this.keys['arrowup']) forceY -= keySensitivity;
+    if (this.keys['s'] || this.keys['arrowdown']) forceY += keySensitivity;
+    if (this.keys['a'] || this.keys['arrowleft']) forceX -= keySensitivity;
+    if (this.keys['d'] || this.keys['arrowright']) forceX += keySensitivity;
 
-  velocity.x += totalAngleX * sensitivity;
-  velocity.y += totalAngleY * sensitivity;
-  velocity.x *= friction;
-  velocity.y *= friction;
+    // Tilt input (for mobile)
+    const finalTiltX = this.tilt.x - this.tiltOffset.x;
+    const finalTiltY = this.tilt.y - this.tiltOffset.y;
+    forceX += finalTiltX;
+    forceY -= finalTiltY; // Invert Y-axis for natural feel
 
-  marble.x += velocity.x;
-  marble.y += velocity.y;
+    // 2. Apply forces to velocity
+    this.marble.vx += forceX * this.sensitivity * 0.1;
+    this.marble.vy += forceY * this.sensitivity * 0.1;
 
-  // Wall clamp
-  marble.x = Math.max(marble.r, Math.min(canvas.width - marble.r, marble.x));
-  marble.y = Math.max(marble.r, Math.min(canvas.height - marble.r, marble.y));
+    // 3. Apply friction
+    this.marble.vx *= this.friction;
+    this.marble.vy *= this.friction;
 
-  // Hole check
-  for (const hole of holes) {
-    const dx = marble.x - hole.x;
-    const dy = marble.y - hole.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < marble.r + hole.r) {
-      restartGame();
-      return;
+    // 4. Update position
+    this.marble.x += this.marble.vx;
+    this.marble.y += this.marble.vy;
+
+    // 5. Collision detection
+    // Walls
+    if (this.marble.x < this.marble.r) { this.marble.x = this.marble.r; this.marble.vx *= -0.5; }
+    if (this.marble.x > this.canvas.width - this.marble.r) { this.marble.x = this.canvas.width - this.marble.r; this.marble.vx *= -0.5; }
+    if (this.marble.y < this.marble.r) { this.marble.y = this.marble.r; this.marble.vy *= -0.5; }
+    if (this.marble.y > this.canvas.height - this.marble.r) { this.marble.y = this.canvas.height - this.marble.r; this.marble.vy *= -0.5; }
+
+    // Holes
+    for (const hole of this.holes) {
+      if (this.checkCollision(this.marble, hole)) {
+        this.restart();
+        return;
+      }
+    }
+
+    // Goal
+    if (this.checkCollision(this.marble, this.goal)) {
+      this.gameState = 'won';
+      this.winMessage.classList.remove('hidden');
     }
   }
+  
+  checkCollision(obj1, obj2) {
+      const dx = obj1.x - obj2.x;
+      const dy = obj1.y - obj2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      // Fall in if center is over the hole radius
+      return distance < obj2.r;
+  }
 
-  // Goal check
-  const dx = marble.x - goal.x;
-  const dy = marble.y - goal.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist < marble.r + goal.r) {
-    alert("You reached the goal!");
-    restartGame();
+  draw() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Background
+    if (this.assets.background) {
+        this.ctx.drawImage(this.assets.background, 0, 0, this.canvas.width, this.canvas.height);
+    } else {
+        this.ctx.fillStyle = '#d2b48c'; // Fallback color
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    // Draw helper function for sprites
+    const drawSprite = (asset, obj) => {
+        if (this.assets[asset]) {
+            this.ctx.drawImage(this.assets[asset], obj.x - obj.r, obj.y - obj.r, obj.r * 2, obj.r * 2);
+        }
+    };
+
+    // Draw Goal, Holes, and Marble
+    drawSprite('goal', this.goal);
+    this.holes.forEach(hole => drawSprite('hole', hole));
+    drawSprite('marble', this.marble);
+  }
+
+  gameLoop() {
+    this.update();
+    this.draw();
+    requestAnimationFrame(() => this.gameLoop());
   }
 }
 
-function gameLoop() {
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
+// Kickstart the game
+const game = new Game('gameCanvas');
+game.init();

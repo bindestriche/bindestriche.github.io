@@ -1,15 +1,103 @@
-body {
-  font-family: sans-serif;
-  text-align: center;
-  background: #f2f2f2;
-  color: #333;
+/* General Body Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #333;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
-.sensor {
-  background: white;
-  margin: 20px auto;
-  padding: 15px;
-  border-radius: 10px;
-  width: 80%;
-  max-width: 400px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+
+/* The container that enforces the square aspect ratio */
+#game-container {
+  position: relative;
+  width: 90vmin; /* 90% of the smaller viewport dimension */
+  height: 90vmin;
+  max-width: 800px;
+  max-height: 800px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+/* The canvas fills its container */
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+}
+
+/* UI Controls Styling */
+#controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 10px 20px;
+  border-radius: 12px;
+}
+
+#controls button {
+  padding: 10px 15px;
+  font-size: 1em;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#controls button:hover {
+  background-color: #0056b3;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Overlay for messages like "You Won!" */
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+#win-message {
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 30px 50px;
+    border-radius: 15px;
+    text-align: center;
+    pointer-events: all; /* Make this element clickable */
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+#win-message:not(.hidden) {
+    transform: scale(1);
+    opacity: 1;
+}
+
+#win-message h2 {
+    margin: 0 0 20px 0;
+    font-size: 2.5em;
+}
+
+.hidden {
+    display: none;
 }

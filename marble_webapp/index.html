@@ -1,62 +1,47 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Marble Game</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    /*make the canvas be centered on the page and have a bit of border*/
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      box-sizing: border-box;
-    }
-    canvas {
-      width: 90vw;
-      height: 90vh;
-      max-width: 1000px;
-      max-height: 800px;
-      display: block;
-      background: #f0f0f0;
-      border: 2px solid #ccc;
-      border-radius: 12px;
-      box-sizing: border-box;
-    }
-    #controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      background: #fff8;
-      padding: 8px;
-      border-radius: 8px;
-    }
-    button {
-      padding: 4px 8px;
-      font-size: 10px;
-      background-color: #007bff;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Marble Maze</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#333333"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <p>v0.02.</p>
-  <div id="controls">
-    <button id="resetBtn">Reset Neigung</button>
-    <label>Sensitivität:
-      <input type="range" id="sensitivitySlider" min="0.1" max="2" step="0.01" value="0.5">
-      <span id="sensitivityValue">0.50</span>
-    </label>
+
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-overlay">
+        <div id="win-message" class="hidden">
+            <h2>You Won!</h2>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
   </div>
-  <canvas id="gameCanvas"></canvas>
-  <script src="app.js">
-  
+
+  <div id="controls">
+    <button id="resetTiltBtn">Reset Tilt</button>
+    <div class="slider-container">
+      <label for="sensitivitySlider">Sensitivity</label>
+      <input type="range" id="sensitivitySlider" min="0.1" max="1.5" step="0.05" value="0.5">
+    </div>
+  </div>
+
+  <script>
+    // Register Service Worker for offline functionality
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => console.log('ServiceWorker registration successful'))
+          .catch(err => console.log('ServiceWorker registration failed: ', err));
+      });
+    }
   </script>
+  <script src="app.js" type="module"></script>
 </body>
 </html>
