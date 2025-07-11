@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Babylon.js Ball Roller</title>
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        #levelButtons {
+            position: absolute;
+            width: 100%;
+            top: 10px;
+            left: 0;
+            z-index: 10;
+            text-align: center;
+        }
+        #levelButtons button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            font-size: 16px;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            border: 1px solid white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #levelButtons button:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        #settings {
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: sans-serif;
+        }
+        #settings label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #settings input {
+            vertical-align: middle;
+        }
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 180px;
+            height: 180px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            z-index: 10;
+        }
+        #controls button {
+            background-color: rgba(50, 50, 50, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #controls button:hover { background-color: rgba(20, 20, 20, 1); }
+        #controls button:active {
+            background-color: rgba(255, 255, 255, 0.7);
+            color: black;
+        }
+        #btn-up    { grid-area: 1 / 2 / 2 / 3; }
+        #btn-left  { grid-area: 2 / 1 / 3 / 2; }
+        #btn-right { grid-area: 2 / 3 / 3 / 4; }
+        #btn-down  { grid-area: 3 / 2 / 4 / 3; }
+
+        #debugInfo {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 10;
+        }
+    </style>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/cannon.js"></script>
+    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+</head>
+<body>
+    <div id="levelButtons"></div>
+    <canvas id="renderCanvas"></canvas>
+    <div id="debugInfo"></div>
+    <div id="settings">
+        <label for="button_size_slider">Controls Size:</label>
+        <input type="range" min="30" max="400" value="60" class="slider" id="button_size_slider">
+        <br>
+        <label for="tiltToggle">Enable Tilt:</label>
+        <input type="checkbox" id="tiltToggle" checked>
+    </div>
+    <div id="controls">
+        <button id="btn-up">▲</button>
+        <button id="btn-left">◀</button>
+        <button id="btn-right">▶</button>
+        <button id="btn-down">▼</button>
+    </div>
+
+    <script>
+        // Main game logic moved directly inside this script tag
+        window.addEventListener('DOMContentLoaded', () => {
+
+            // --- Basic Setup ---
+            const canvas = document.getElementById("renderCanvas");
+            const engine = new BABYLON.Engine(canvas, true);
+            const debugInfo = document.getElementById("debugInfo");
+            const tiltToggle = document.getElementById('tiltToggle');
+            let levelCompleted = false;
+
+            // --- Game State & Levels ---
+            const inputMap = {};
+            const levels = [
+                 ["WWWWWWWWWW","WS-------W","WWWWWW---W","W--------W","W---WWWWWW","W--------W","W---G--W-W","WWWWWWWWWW"],
+                 ["WWWWWWWWWW","WS-------W","WWWWWW--xW","W-------xW","W---WWWWWW","W-x-W----W","W-x-WW-W-W","W---G--W-W","WWWWWWWWWW"],
+                 ["WWWWWWWWWW","W-G-W----W","W-WWWW-W-W","W-W----x-W","W-W-WWWW-W","W-x-W--x-W","W-x-WW-W-W","WS-----W-W","WWWWWWWWWW"],
+                 ["WWWWWWWWWW","WS-x--x--W","W--W--W--W","W-W-WW-W-W","W-W-G--W-W","W-W--W-W-W","W--W--W--W","W--x--x--W","WWWWWWWWWW"],
+                 ["WWWWWWWWWW","wS-O--O--W","W0-0--W--W","W-x-xx-x-W","W-0-G--W-W","W-0--0-0-W","W--0--W--W","W--O--O--W","WWWWWWWWWW"],
+                 ["WWWWWWWWWW","wS-O--O--W","Wx-x--W--W","W-x-xx-x-W","W-x-G--W-W","W--x--x--W","WWWWWWWWWW"],
+                ["WWWWWWWWWW","wS-000--W","W0-0--W--W","W-0-00-0-W","W-0-G--W-W","W-0--0-0-W","W--0--W--W","W--O--O--W","WWWWWWWWWW"],
+                ["WWWWWWWWWW","wS-O--O--W","Wx-x--W--W","W-x-x-x-W","W-x-G--W-W","W--x--x--W","WWWWWWWWWW"]
+            ];
+            const levelButtonsDiv = document.getElementById("levelButtons");
+            let currentLevelIndex = 0;
+            let completedLevels = Array(levels.length).fill(false);
+
+            // --- Shared Game Variables ---
+            let scene, ball, startPosition, goalMesh;
+            
+            // --- Tilt Control State ---
+            let tiltEnabled = tiltToggle.checked;
+            let tiltX = 0, tiltY = 0;
+
+            tiltToggle.addEventListener('change', (e) => {
+                tiltEnabled = e.target.checked;
+            });
+
+            // --- Core Game Functions ---
+            function createLevelFromMap(map) {
+                const tileSize = 2, wallHeight = 2;
+                const levelWidth = map[0].length, levelHeight = map.length;
+                const offsetX = -(levelWidth * tileSize) / 2 + tileSize / 2;
+                const offsetZ = (levelHeight * tileSize) / 2 - tileSize / 2;
+
+                const floorMaterial = scene.getMaterialByName("floorMat");
+                const wallMaterial = scene.getMaterialByName("wallMat");
+                const goalMaterial = scene.getMaterialByName("goalMat");
+                const obstacleMaterial = scene.getMaterialByName("obstacleMat");
+
+                for (let row = 0; row < map.length; row++) {
+                    for (let col = 0; col < map[row].length; col++) {
+                        const char = map[row][col];
+                        const x = col * tileSize + offsetX;
+                        const z = -(row * tileSize - offsetZ);
+
+                        if (char === '-' || char === 'S' || char === 'G') {
+                            const tile = BABYLON.MeshBuilder.CreateBox(`f_${row}_${col}`, { width: tileSize, height: 0.1, depth: tileSize }, scene);
+                            tile.position = new BABYLON.Vector3(x, 0, z);
+                            tile.physicsImpostor = new BABYLON.PhysicsImpostor(tile, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9, friction: 0.5 }, scene);
+                            tile.material = floorMaterial;
+
+                            if (char === 'S') {
+                                startPosition = new BABYLON.Vector3(x, 0.7, z);
+                                ball.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(0, 0, 0));
+ball.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(0, 0, 0));
+                            }
+                            if (char === 'G') {
+                                tile.material = goalMaterial;
+                                goalMesh = tile;
+                                goalMesh.name = "goal";
+                                goalMesh.actionManager = new BABYLON.ActionManager(scene);
+                                goalMesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+                                    { trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+                                         parameter: { mesh: ball },
+                                        triggerOnce:true },
+                                    () => {
+                                        if (levelCompleted) return;   // ← never run twice
+                                        levelCompleted = true;
+
+                                        showMessage(`Level ${currentLevelIndex + 1} Complete!`);
+                                        ball.physicsImpostor.setLinearVelocity(BABYLON.Vector3.Zero());
+                                        setTimeout(() => {
+                                            completedLevels[currentLevelIndex] = true;
+                                            if (currentLevelIndex + 1 < levels.length) {
+                                                completedLevels[currentLevelIndex + 1] = true; 
+                                                ball.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(0, 0, 0));
+ball.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(0, 0, 0));
+                                                loadLevel(currentLevelIndex + 1);
+                                            } else {
+                                                showMessage("You beat all levels!");
+                                            }
+                                            updateLevelButtons();
+                                        }, 2000);
+                                    }
+                                ));
+                            }
+                        } else if (char === 'W' || char === 'w') { // Handles both W and w
+                            const wall = BABYLON.MeshBuilder.CreateBox(`w_${row}_${col}`, { width: tileSize, height: wallHeight, depth: tileSize }, scene);
+                            wall.position = new BABYLON.Vector3(x, wallHeight / 2, z);
+                            wall.material = wallMaterial;
+                            wall.physicsImpostor = new BABYLON.PhysicsImpostor(wall, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9, friction: 0.5 }, scene);
+                        } else if (char === 'O' || char === '0') { // Handles both O and 0
+                            const obstacleHeight = wallHeight / 4;
+                            const obstacle = BABYLON.MeshBuilder.CreateBox(`o_${row}_${col}`, { width: tileSize, height: obstacleHeight, depth: tileSize }, scene);
+                            obstacle.position = new BABYLON.Vector3(x, obstacleHeight / 2, z);
+                            obstacle.material = obstacleMaterial;
+                            obstacle.physicsImpostor = new BABYLON.PhysicsImpostor(obstacle, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9, friction: 0.5 }, scene);
+                        }
+                    }
+                }
+            };
+            
+            const resetBall = () => {
+                if (ball && ball.physicsImpostor && startPosition) {
+
+                    ball.physicsImpostor.sleep();
+
+                    ball.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(0, 0, 0));
+                    ball.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(0, 0, 0));
+                    ball.position = startPosition.clone();
+                   
+                    ball.rotationQuaternion = BABYLON.Quaternion.Identity(); // Reset rotation
+                      // 3. small delay, then wake it
+                setTimeout(() => {
+                    ball.physicsImpostor.wakeUp();
+                }, 50);
+                }
+            };
+
+            function updateLevelButtons() {
+                levelButtonsDiv.innerHTML = "";
+                levels.forEach((_, idx) => {
+                    const btn = document.createElement("button");
+                    btn.textContent = `Level ${idx + 1}`;
+                    if(completedLevels[idx] || idx === 0) {
+                         btn.style.display = "inline-block";
+                    } else {
+                         btn.style.display = "none";
+                    }
+                    btn.onclick = () => loadLevel(idx);
+                    levelButtonsDiv.appendChild(btn);
+                });
+            }
+
+            function loadLevel(levelIdx) {
+                if (!scene) return;
+                currentLevelIndex = levelIdx;
+                levelCompleted = false;
+                const meshesToDispose = scene.meshes.filter(mesh => mesh.name.startsWith("f_") || mesh.name.startsWith("w_") || mesh.name.startsWith("o_") || mesh.name === "goal");
+                meshesToDispose.forEach(mesh => mesh.dispose());
+                createLevelFromMap(levels[levelIdx]);
+                resetBall();
+            }
+
+            function showMessage(msg) {
+                let msgDiv = document.getElementById("gameMessage");
+                if (!msgDiv) {
+                    msgDiv = document.createElement("div");
+                    msgDiv.id = "gameMessage";
+                    msgDiv.style.position = "fixed";
+                    msgDiv.style.top = "40%";
+                    msgDiv.style.left = "50%";
+                    msgDiv.style.transform = "translate(-50%, -50%)";
+                    msgDiv.style.background = "rgba(0,0,0,0.8)";
+                    msgDiv.style.color = "#fff";
+                    msgDiv.style.padding = "24px 48px";
+                    msgDiv.style.fontSize = "2em";
+                    msgDiv.style.borderRadius = "12px";
+                    msgDiv.style.zIndex = "9999";
+                    msgDiv.style.textAlign = "center";
+                    document.body.appendChild(msgDiv);
+                }
+                msgDiv.textContent = msg;
+                msgDiv.style.display = "block";
+                setTimeout(() => { if(msgDiv) { msgDiv.style.display = "none"; }}, 2000);
+            }
+            
+            const createScene = () => {
+                scene = new BABYLON.Scene(engine);
+                const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 4, 30, BABYLON.Vector3.Zero(), scene);
+                camera.attachControl(canvas, true);
+                camera.upperBetaLimit = Math.PI / 2.2;
+                camera.lowerRadiusLimit = 10;
+                camera.upperRadiusLimit = 50;
+
+                const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+                const physicsPlugin = new BABYLON.CannonJSPlugin();
+                scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), physicsPlugin);
+
+                // --- Materials (created once) ---
+                new BABYLON.StandardMaterial("floorMat", scene).diffuseTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/checkerboard.jpg", scene);
+                new BABYLON.StandardMaterial("wallMat", scene).diffuseTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/wood.jpg", scene);
+                
+                const obstacleMaterial = new BABYLON.StandardMaterial("obstacleMat", scene);
+                obstacleMaterial.diffuseTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/wood.jpg", scene);
+                obstacleMaterial.diffuseColor = new BABYLON.Color3(0.8, 0.4, 0.4); // Give obstacles a reddish tint
+
+                const goalMaterial = new BABYLON.StandardMaterial("goalMat", scene);
+                goalMaterial.diffuseColor = new BABYLON.Color3.Green();
+                goalMaterial.emissiveColor = new BABYLON.Color3(0.2, 0.7, 0.2);
+
+                // --- Ball (created once) ---
+                ball = BABYLON.MeshBuilder.CreateSphere("ball", { diameter: 1 }, scene);
+                ball.material = new BABYLON.StandardMaterial("ballMat", scene);
+                ball.material.diffuseTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/eightball.png", scene);
+                ball.physicsImpostor = new BABYLON.PhysicsImpostor(ball, BABYLON.PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.5, friction: 0.1, damping: 0.1 });
+                
+                // --- Keyboard Input Actions ---
+                scene.actionManager = new BABYLON.ActionManager(scene);
+                scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, (evt) => { inputMap[evt.sourceEvent.key.toLowerCase()] = true; }));
+                scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, (evt) => { inputMap[evt.sourceEvent.key.toLowerCase()] = false; }));
+                
+                // --- GAME LOOP ---
+                scene.onBeforeRenderObservable.add(() => {
+                    if (!ball || !ball.physicsImpostor) return;
+
+                    if (ball.position.y < -10) {
+                        showMessage("You fell! Try again.");
+                        resetBall();
+                    }
+
+                    const moveForce = 20;
+                    const tiltSensitivity = 0.5;
+                    const totalForce = new BABYLON.Vector3.Zero();
+                    const cameraForward = camera.getDirection(BABYLON.Vector3.Forward());
+                    const forward = new BABYLON.Vector3(cameraForward.x, 0, cameraForward.z).normalize();
+                    const right = BABYLON.Vector3.Cross(BABYLON.Vector3.Up(), forward).normalize();
+                    
+                    const keyForceDirection = new BABYLON.Vector3.Zero();
+                    if (inputMap["w"] || inputMap["arrowup"]) { keyForceDirection.addInPlace(forward); }
+                    if (inputMap["s"] || inputMap["arrowdown"]) { keyForceDirection.subtractInPlace(forward); }
+                    if (inputMap["d"] || inputMap["arrowright"]) { keyForceDirection.addInPlace(right); }
+                    if (inputMap["a"] || inputMap["arrowleft"]) { keyForceDirection.subtractInPlace(right); }
+                    
+                    if (keyForceDirection.length() > 0.01) {
+                        totalForce.addInPlace(keyForceDirection.normalize().scale(moveForce));
+                    }
+                    
+                    if (tiltEnabled) {
+                        const tiltForceDirection = forward.scale(tiltY).add(right.scale(tiltX));
+                        totalForce.addInPlace(tiltForceDirection.scale(tiltSensitivity));
+                    }
+
+                    if (totalForce.length() > 0.01) {
+                        ball.physicsImpostor.applyForce(totalForce, ball.getAbsolutePosition());
+                    }
+
+                    if (debugInfo) {
+                        debugInfo.innerHTML = `Tilt Enabled: ${tiltEnabled}<br>Tilt X: ${tiltX.toFixed(2)}<br>Tilt Y: ${tiltY.toFixed(2)}`;
+                    }
+                });
+
+                return scene;
+            };
+            
+            const setupButtonControls = (buttonId, key) => {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+                const pressEvent = (e) => { e.preventDefault(); inputMap[key] = true; };
+                const releaseEvent = (e) => { e.preventDefault(); inputMap[key] = false; };
+                button.addEventListener("mousedown", pressEvent);
+                button.addEventListener("mouseup", releaseEvent);
+                button.addEventListener("mouseleave", releaseEvent);
+                button.addEventListener("touchstart", pressEvent, { passive: false });
+                button.addEventListener("touchend", releaseEvent);
+                button.addEventListener("touchcancel", releaseEvent);
+            };
+
+            const handleDeviceOrientation = (event) => {
+                tiltX = event.gamma || 0; // Left-to-right tilt (a-d)
+                tiltY = event.beta || 0;  // Front-to-back tilt (w-s)
+            };
+
+            // --- Main Execution ---
+            createScene();
+            
+            setupButtonControls("btn-up", "w");
+            setupButtonControls("btn-down", "s");
+            setupButtonControls("btn-left", "a");
+            setupButtonControls("btn-right", "d");
+            
+            window.addEventListener("deviceorientation", handleDeviceOrientation);
+
+            completedLevels[0] = true;
+            updateLevelButtons();
+            loadLevel(0);
+            
+            engine.runRenderLoop(() => {
+                if (scene) {
+                    scene.render();
+                }
+            });
+
+            window.addEventListener("resize", () => {
+                engine.resize();
+            });
+        });
+
+        // Slider script for controls
+        let slider = document.getElementById("button_size_slider");
+        let controlsContainer = document.getElementById("controls");
+        
+        slider.oninput = function() {
+            const size = this.value * 3;
+            controlsContainer.style.width = size + 'px';
+            controlsContainer.style.height = size + 'px';
+        }
+        slider.oninput();
+    </script>
+</body>
+</html>
